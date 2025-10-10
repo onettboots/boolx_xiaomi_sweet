@@ -9,7 +9,7 @@ SECONDS=0 # builtin bash timer
 ALLOWED_CODENAMES=("sweet" "courbet" "tucana" "toco" "phoenix" "davinci")
 
 # Prompt user for device codename
-read -p "Enter device codename: " DEVICE
+DEVICE=sweet
 
 # Check if the entered codename is in the allowed list
 if [[ ! " ${ALLOWED_CODENAMES[@]} " =~ " ${DEVICE} " ]]; then
@@ -22,7 +22,7 @@ ZIPNAME="${DEVICE}-$(date '+%Y%m%d-%H%M').zip"
 export ARCH=arm64
 export KBUILD_BUILD_USER=aryan
 export KBUILD_BUILD_HOST=celeste
-export PATH="/home/celeste/aryan/linux-x86/clang-r510928/bin/:$PATH"
+export PATH="$HOME/toolchains/boolx-clang/bin/:$PATH"
 
 if [[ $1 = "-c" || $1 = "--clean" ]]; then
 	rm -rf out
@@ -31,7 +31,7 @@ fi
 
 echo -e "\nStarting compilation for $DEVICE...\n"
 make O=out ARCH=arm64 ${DEVICE}_defconfig
-make -j$(nproc) \
+make -s -j$(nproc) \
     O=out \
     ARCH=arm64 \
     LLVM=1 \
