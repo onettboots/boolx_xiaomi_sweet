@@ -2,6 +2,7 @@
 #
 # Compile script for kernel
 #
+KERNEL_DIR="${PWD}"
 
 SECONDS=0 # builtin bash timer
 
@@ -78,5 +79,13 @@ if test -z "$(git rev-parse --show-cdup 2>/dev/null)" &&
 	HASH="$(echo $head | cut -c1-8)"
 fi
 
-source .dump
-sshpass -p "$PASS" scp "$ZIPNAME" "$SF_ACC"
+function upload() {
+        source $KERNEL_DIR/.dump
+        sshpass -p "$PASSWORD" scp "$ZIPNAME" "$USER@$HOST:$REMOTE_DIR"
+}
+
+if [ -f $KERNEL_DIR/.dump ]; then
+	upload
+else
+	exit 1
+fi
