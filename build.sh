@@ -17,7 +17,7 @@ if [[ ! " ${ALLOWED_CODENAMES[@]} " =~ " ${DEVICE} " ]]; then
     exit 1
 fi
 
-ZIPNAME="${DEVICE}-$(date '+%Y%m%d-%H%M').zip"
+ZIPNAME="Boolx-${DEVICE}-$(date '+%Y%m%d-%H%M')-Nethunter.zip"
 
 export ARCH=arm64
 export KBUILD_BUILD_USER=aryan
@@ -78,4 +78,5 @@ if test -z "$(git rev-parse --show-cdup 2>/dev/null)" &&
 	HASH="$(echo $head | cut -c1-8)"
 fi
 
-telegram -f $ZIPNAME -M "Completed in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s) ! Latest commit: $HASH"
+source .dump
+sshpass -p "$PASS" scp "$ZIPNAME" "$SF_ACC"
