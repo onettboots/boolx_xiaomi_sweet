@@ -2,6 +2,7 @@
 #
 # Compile script for kernel
 #
+KERNEL_DIR="${PWD}"
 
 SECONDS=0 # builtin bash timer
 
@@ -9,7 +10,8 @@ SECONDS=0 # builtin bash timer
 ALLOWED_CODENAMES=("sweet" "courbet" "tucana" "toco" "phoenix" "davinci")
 
 # Prompt user for device codename
-read -p "Enter device codename: " DEVICE
+# read -p "Enter device codename: " DEVICE
+DEVICE=sweet
 
 # Check if the entered codename is in the allowed list
 if [[ ! " ${ALLOWED_CODENAMES[@]} " =~ " ${DEVICE} " ]]; then
@@ -17,12 +19,12 @@ if [[ ! " ${ALLOWED_CODENAMES[@]} " =~ " ${DEVICE} " ]]; then
     exit 1
 fi
 
-ZIPNAME="${DEVICE}-$(date '+%Y%m%d-%H%M').zip"
+ZIPNAME="Boolx-${DEVICE}-$(date '+%Y%m%d-%H%M')-Nethunter.zip"
 
 export ARCH=arm64
 export KBUILD_BUILD_USER=aryan
 export KBUILD_BUILD_HOST=celeste
-export PATH="/home/celeste/aryan/linux-x86/clang-r510928/bin/:$PATH"
+export PATH="$HOME/toolchains/boolx-clang/bin/:$PATH"
 
 if [[ $1 = "-c" || $1 = "--clean" ]]; then
 	rm -rf out
@@ -31,7 +33,7 @@ fi
 
 echo -e "\nStarting compilation for $DEVICE...\n"
 make O=out ARCH=arm64 ${DEVICE}_defconfig
-make -j$(nproc) \
+make -s -j$(nproc) \
     O=out \
     ARCH=arm64 \
     LLVM=1 \
@@ -78,4 +80,40 @@ if test -z "$(git rev-parse --show-cdup 2>/dev/null)" &&
 	HASH="$(echo $head | cut -c1-8)"
 fi
 
-telegram -f $ZIPNAME -M "Completed in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s) ! Latest commit: $HASH"
+KER_VER=$(grep -oP '(?<=VERSION = )\d+|(?<=PATCHLEVEL = )\d+|(?<=SUBLEVEL = )\d+' Makefile | paste -sd '.')
+KSU_VER=$(cat drivers/kernelsu/kernel/dksu 2>/dev/null || echo "Disabled")
+SUSFS_VER=$(grep -oP '(?<=#define SUSFS_VERSION ")[^"]*' include/linux/susfs.h 2>/dev/null || echo "Disabled")
+
+function upload() {
+        source $KERNEL_DIR/.dump
+        sshpass -p "$PASSWORD" scp "$ZIPNAME" "$USER@$HOST:$REMOTE_DIR"
+}
+
+function upload_boolx_action()
+{
+		cd $KERNEL_DIR
+		upl=$KERNEL_DIR/upl.sh
+		chmod +x $upl
+		sed -i "4i\FILE_PATH=$KERNEL_DIR/$ZIPNAME" $upl
+		BUILDDATE=`date +"%Y-%m-%d"`
+		sed -i '5i\CAPTION="* Build Date: '$BUILDDATE'' $upl
+		sed -i '6i\* Kernel Version: '$KER_VER'' $upl
+		sed -i '7i\* KSU+NEXT: '$KSU_VER'' $upl
+		sed -i '8i\* SUSFS: '$SUSFS_VER'' $upl
+		sed -i '9i\* Type: AOSP, Nethunter' $upl
+		#sed -i '10i\* Changes: https://github.com/onettboots/bool-x_xiaomi_raphael/commits/14-DSPcr' $upl
+            	sed -i '10i\* Clang: Boolx Clang 22.0.0' $upl
+            	bash $upl
+}
+
+if [ -f $KERNEL_DIR/.dump ]; then
+	upload
+else
+	exit 1
+fi
+
+if [ -f $KERNEL_DIR/upl.sh ]; then
+        upload_tg
+else
+        exit 1
+fi
