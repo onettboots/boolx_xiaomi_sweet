@@ -79,13 +79,40 @@ if test -z "$(git rev-parse --show-cdup 2>/dev/null)" &&
 	HASH="$(echo $head | cut -c1-8)"
 fi
 
+KER_VER=$(grep -oP '(?<=VERSION = )\d+|(?<=PATCHLEVEL = )\d+|(?<=SUBLEVEL = )\d+' Makefile | paste -sd '.')
+KSU_VER=$(cat drivers/kernelsu/kernel/dksu 2>/dev/null || echo "Disabled")
+SUSFS_VER=$(grep -oP '(?<=#define SUSFS_VERSION ")[^"]*' include/linux/susfs.h 2>/dev/null || echo "Disabled")
+
 function upload() {
         source $KERNEL_DIR/.dump
         sshpass -p "$PASSWORD" scp "$ZIPNAME" "$USER@$HOST:$REMOTE_DIR"
+}
+
+function upload_tg()
+{
+		cd $KERNEL_DIR
+		upl=$KERNEL_DIR/upl.sh
+		chmod +x $upl
+		sed -i "4i\FILE_PATH=$KERNEL_DIR/$ZIPNAME" $upl
+		BUILDDATE=`date +"%Y-%m-%d"`
+		sed -i '5i\CAPTION="* Build Date: '$BUILDDATE'' $upl
+		sed -i '6i\* Kernel Version: '$KER_VER'' $upl
+		sed -i '7i\* KSU+NEXT: '$KSU_VER'' $upl
+		sed -i '8i\* SUSFS: '$SUSFS_VER'' $upl
+		sed -i '9i\* Type: AOSP, Nethunter' $upl
+		#sed -i '10i\* Changes: https://github.com/onettboots/bool-x_xiaomi_raphael/commits/14-DSPcr' $upl
+            	sed -i '10i\* Clang: Boolx Clang 22.0.0' $upl
+            	bash $upl
 }
 
 if [ -f $KERNEL_DIR/.dump ]; then
 	upload
 else
 	exit 1
+fi
+
+if [ -f $KERNEL_DIR/upl.sh ]; then
+        upload_tg
+else
+        exit 1
 fi
