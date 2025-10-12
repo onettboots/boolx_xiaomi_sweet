@@ -25,6 +25,12 @@ export ARCH=arm64
 export KBUILD_BUILD_USER=aryan
 export KBUILD_BUILD_HOST=celeste
 export PATH="$HOME/toolchains/boolx-clang/bin/:$PATH"
+export CC=$HOME/toolchains/boolx-clang/bin/clang
+export LC_ALL=C
+export USE_CCACHE=1
+export CCACHE_EXEC=$(command -v ccache)
+#export CCACHE_DIR="$HOME/toolchains/ccache" # its for local build #
+ccache -M 10G
 
 if [[ $1 = "-c" || $1 = "--clean" ]]; then
 	rm -rf out
@@ -36,6 +42,7 @@ make O=out ARCH=arm64 ${DEVICE}_defconfig
 make -s -j$(nproc) \
     O=out \
     ARCH=arm64 \
+    CC="ccache clang" \
     LLVM=1 \
     LLVM_IAS=1 \
     CROSS_COMPILE=aarch64-linux-gnu- \
@@ -102,7 +109,7 @@ function upload_tg()
 		sed -i '8i\* SUSFS: '$SUSFS_VER'' $upl
 		sed -i '9i\* Type: AOSP, Nethunter' $upl
 		#sed -i '10i\* Changes: https://github.com/onettboots/bool-x_xiaomi_raphael/commits/14-DSPcr' $upl
-            	sed -i '10i\* Clang: Boolx Clang 19.0.0' $upl
+            	sed -i '10i\* Clang: Boolx Clang 19.0.0"' $upl
             	bash $upl
 }
 
