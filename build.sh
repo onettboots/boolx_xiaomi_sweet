@@ -89,7 +89,7 @@ function upload() {
         sshpass -p "$PASSWORD" scp "$ZIPNAME" "$USER@$HOST:$REMOTE_DIR"
 }
 
-function upload_boolx_action()
+function upload_tg()
 {
 		cd $KERNEL_DIR
 		upl=$KERNEL_DIR/upl.sh
@@ -102,7 +102,7 @@ function upload_boolx_action()
 		sed -i '8i\* SUSFS: '$SUSFS_VER'' $upl
 		sed -i '9i\* Type: AOSP, Nethunter' $upl
 		#sed -i '10i\* Changes: https://github.com/onettboots/bool-x_xiaomi_raphael/commits/14-DSPcr' $upl
-            	sed -i '10i\* Clang: Boolx Clang 22.0.0' $upl
+            	sed -i '10i\* Clang: Boolx Clang 19.0.0' $upl
             	bash $upl
 }
 
