@@ -37,6 +37,43 @@ if [[ $1 = "-c" || $1 = "--clean" ]]; then
 	echo "Cleaned output folder"
 fi
 
+TOOLCHAINS=$HOME/toolchains/boolx-clang
+SAVEHERE=$HOME/toolchains
+
+if [ -d $TOOLCHAINS ]; then
+   echo "Bool-x clang is ready..!!"
+else
+   echo "Toolchains Architecture Host:"
+   echo "1. ARCH64"
+   echo "2. X86"
+   while read -p "Choose your architecture (1 / 2)? " cchoice
+do
+case "$cchoice" in
+        1 )
+                echo
+                echo "Downloading Boolx-clang for Aarch64 host."
+                git clone https://gitlab.com/onettboots/boolx-clang.git -b Clang-15.0 $TOOLCHAINS
+                break
+                ;;
+        2 )
+                echo
+                echo "Downloading Boolx-clang 21.0.0 for X86 host."
+                wget https://github.com/onettboots/boolx-clang-build/releases/download/Boolx-21/boolx-clang21.tar.gz -P $SAVEHERE
+                cd $SAVEHERE
+                echo "Extracting Boolx Clang 21.0.0 to $HOME/toolchains/:"
+                tar -xf boolx-clang21.tar.gz
+                break
+                ;;
+        * )
+                echo
+                echo "Invalid try again!"
+                echo
+                ;;
+esac
+done
+   echo 
+fi
+
 echo -e "\nStarting compilation for $DEVICE...\n"
 make O=out ARCH=arm64 ${DEVICE}_defconfig
 make -s -j$(nproc) \
