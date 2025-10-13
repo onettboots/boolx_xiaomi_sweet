@@ -24,19 +24,18 @@ ZIPNAME="Boolx-${DEVICE}-$(date '+%Y%m%d-%H%M')-Nethunter.zip"
 export ARCH=arm64
 export KBUILD_BUILD_USER=aryan
 export KBUILD_BUILD_HOST=celeste
-export PATH="$HOME/toolchains/boolx-clang/bin/:$PATH"
-export CC=$HOME/toolchains/boolx-clang/bin/clang
+export PATH="$HOME/toolchains/19/bin/:$PATH"
+export CC=$HOME/toolchains/19/bin/clang
 export LC_ALL=C
 export USE_CCACHE=1
 export CCACHE_EXEC=$(command -v ccache)
-#export CCACHE_DIR="$HOME/toolchains/ccache" # its for local build #
+#export CCACHE_DIR="$HOME/toolchains/ccache" #localbuild
 ccache -M 10G
 
 if [[ $1 = "-c" || $1 = "--clean" ]]; then
 	rm -rf out
 	echo "Cleaned output folder"
 fi
-
 TOOLCHAINS=$HOME/toolchains/boolx-clang
 SAVEHERE=$HOME/toolchains
 
@@ -71,27 +70,46 @@ case "$cchoice" in
                 ;;
 esac
 done
-   echo 
+   echo
 fi
-
-echo -e "\nStarting compilation for $DEVICE...\n"
-make O=out ARCH=arm64 ${DEVICE}_defconfig
-make -j$(nproc) \
- O=out \
- ARCH=arm64 \
- CC="ccache clang" \
- LLVM=1 \
- LLVM_IAS=1 \
- CROSS_COMPILE=aarch64-linux-gnu- \
- CROSS_COMPILE_ARM32=arm-linux-gnueabi- >> logs.txt 2>&1
-
 
 kernel="out/arch/arm64/boot/Image.gz"
 dtbo="out/arch/arm64/boot/dtbo.img"
 dtb="out/arch/arm64/boot/dtb.img"
 
+echo -e "\nStarting compilation for $DEVICE...\n"
+make -s O=out ARCH=arm64 ${DEVICE}_defconfig
+
+total_lines=7073
+count=0
+bar_length=50
+
+make -j$(nproc) \
+    O=out \
+    ARCH=arm64 \
+    CC="ccache clang" \
+    LLVM=1 \
+    LLVM_IAS=1 \
+    CROSS_COMPILE=aarch64-linux-gnu- \
+    CROSS_COMPILE_ARM32=arm-linux-gnueabi- 2>&1 | tee logs.txt | while IFS= read -r line; do
+
+    ((count++))
+    percent=$(( count * 100 / total_lines ))
+    (( percent > 100 )) && percent=100
+
+    filled=$(( percent * bar_length / 100 ))
+    empty=$(( bar_length - filled ))
+
+    #echo "$line"
+
+    printf "\rBuilding: [%-${bar_length}s] %3d%%" \
+        "$(printf '#%.0s' $(seq 1 $filled))$(printf '.%.0s' $(seq 1 $empty))" \
+        "$percent"
+
+done
+
 if [ ! -f "$kernel" ] || [ ! -f "$dtbo" ] || [ ! -f "$dtb" ]; then
-	echo -e "\nCompilation failed!"
+	echo -e "\nCompilation failed! see logs.txt and fix it"
 	exit 1
 fi
 
@@ -118,7 +136,12 @@ zip -r9 "../$ZIPNAME" * -x .git
 cd ..
 rm -rf AnyKernel3
 echo -e "\nCompleted in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s) !"
-echo "Zip: $ZIPNAME"
+echo "FILE: $ZIPNAME"
+
+if test -z "$(git rev-parse --show-cdup 2>/dev/null)" &&
+   head=$(git rev-parse --verify HEAD 2>/dev/null); then
+	HASH="$(echo $head | cut -c1-8)"
+fi
 
 KER_VER=$(grep -oP '(?<=VERSION = )\d+|(?<=PATCHLEVEL = )\d+|(?<=SUBLEVEL = )\d+' Makefile | paste -sd '.')
 KSU_VER=$(cat drivers/kernelsu/kernel/dksu 2>/dev/null || echo "Disabled")
@@ -153,3 +176,5 @@ elif [[ -f "$KERNEL_DIR/upl.sh" ]]; then
 else
     echo ""
 fi
+
+rm -rf $kernel $dtb $dtbo
