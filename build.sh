@@ -93,7 +93,7 @@ SUSFS_VER=$(grep -oP '(?<=#define SUSFS_VERSION ")[^"]*' include/linux/susfs.h 2
 
 function upload() {
         source $KERNEL_DIR/.dump
-        sshpass -p "$PASSWORD" scp "$ZIPNAME" "$USER@$HOST:$REMOTE_DIR"
+        sshpass -p "$PASSWORD" scp -o StrictHostKeyChecking=no "$ZIPNAME" "$USER@$HOST:$REMOTE_DIR"
 }
 
 function upload_tg()
