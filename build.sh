@@ -76,14 +76,15 @@ fi
 
 echo -e "\nStarting compilation for $DEVICE...\n"
 make O=out ARCH=arm64 ${DEVICE}_defconfig
-make -s -j$(nproc) \
-    O=out \
-    ARCH=arm64 \
-    CC="ccache clang" \
-    LLVM=1 \
-    LLVM_IAS=1 \
-    CROSS_COMPILE=aarch64-linux-gnu- \
-    CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+make -j$(nproc) \
+ O=out \
+ ARCH=arm64 \
+ CC="ccache clang" \
+ LLVM=1 \
+ LLVM_IAS=1 \
+ CROSS_COMPILE=aarch64-linux-gnu- \
+ CROSS_COMPILE_ARM32=arm-linux-gnueabi- >> logs.txt 2>&1
+
 
 kernel="out/arch/arm64/boot/Image.gz"
 dtbo="out/arch/arm64/boot/dtbo.img"
