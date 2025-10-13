@@ -82,11 +82,6 @@ rm -rf AnyKernel3
 echo -e "\nCompleted in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s) !"
 echo "Zip: $ZIPNAME"
 
-if test -z "$(git rev-parse --show-cdup 2>/dev/null)" &&
-   head=$(git rev-parse --verify HEAD 2>/dev/null); then
-	HASH="$(echo $head | cut -c1-8)"
-fi
-
 KER_VER=$(grep -oP '(?<=VERSION = )\d+|(?<=PATCHLEVEL = )\d+|(?<=SUBLEVEL = )\d+' Makefile | paste -sd '.')
 KSU_VER=$(cat drivers/kernelsu/kernel/dksu 2>/dev/null || echo "Disabled")
 SUSFS_VER=$(grep -oP '(?<=#define SUSFS_VERSION ")[^"]*' include/linux/susfs.h 2>/dev/null || echo "Disabled")
@@ -113,14 +108,10 @@ function upload_tg()
             	bash $upl
 }
 
-if [ -f $KERNEL_DIR/.dump ]; then
-	upload
+if [[ -f "$KERNEL_DIR/.dump" ]]; then
+    upload
+elif [[ -f "$KERNEL_DIR/upl.sh" ]]; then
+    upload_tg
 else
-	exit 1
-fi
-
-if [ -f $KERNEL_DIR/upl.sh ]; then
-        upload_tg
-else
-        exit 1
+    echo ""
 fi
