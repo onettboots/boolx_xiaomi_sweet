@@ -35,10 +35,10 @@ dtbo="out/arch/arm64/boot/dtbo.img"
 dtb="out/arch/arm64/boot/dtb.img"
 
 export ARCH=arm64
-export KBUILD_BUILD_USER=aryan
-export KBUILD_BUILD_HOST=celeste
-export PATH="$HOME/toolchains/19/bin/:$PATH"
-export CC=$HOME/toolchains/19/bin/clang
+export KBUILD_BUILD_USER=onett
+export KBUILD_BUILD_HOST=boots
+export PATH="$HOME/toolchains/boolx-clang/bin/:$PATH"
+export CC=$HOME/toolchains/boolx-clang/clang
 export LC_ALL=C
 export USE_CCACHE=1
 export CCACHE_EXEC=$(command -v ccache)
@@ -142,14 +142,25 @@ echo "-----------------------"
 echo -e "${restore}"
 make -s O=out ARCH=arm64 ${DEVICE}_defconfig
 
-if [ -f "out/vmlinux.o" ] || [ -f "$kernel" ]; then
-        total_lines=43
-elif [ -f "out/.config.old" ]; then
-        total_lines=3710
+filezip=$(ls $KERNEL_DIR/*.zip 2>/dev/null | wc -l)
+
+if (( filezip == 1 )); then
+  total_lines=43
+elif (( filezip > 1 )); then
+  total_lines=64
 else
-        total_lines=7000
+  total_lines=7000
 fi
+
+#if [ -f "out/vmlinux.o" ] || [ ! -f "out/.config.old" ]; then
+#        total_lines=43
+#elif [ -f "out/vmlinux.o" ] || [ -f "" ]; then
+#        total_lines=3710
+#else
+#        total_lines=7000
+#fi
 echo -e "${yellow}"
+#total_lines=43
 count=0
 bar_length=50
 make -j$(nproc) \
@@ -252,7 +263,7 @@ function upload_tg()
 		sed -i '6i\* Kernel Version: '$KER_VER'' $upl
 		sed -i '7i\* KSU+NEXT: '$KSU_VER'' $upl
 		sed -i '8i\* SUSFS: '$SUSFS_VER'' $upl
-		sed -i '9i\* Type: AOSP, Nethunter' $upl
+		sed -i '9i\* Type: AOSP' $upl
 		sed -i '10i\* Changes: https://github.com/onettboots/boolx_xiaomi_sweet/commits/ksunext' $upl
             	sed -i '11i\* Clang: Boolx Clang 21.0.0"' $upl
             	bash $upl
@@ -267,3 +278,5 @@ else
 fi
 
 rm -rf $kernel $dtb $dtbo
+cd $KERNEL_DIR
+git restore $CFG
